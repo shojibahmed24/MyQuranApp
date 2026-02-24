@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noor Admin | অ্যাডমিন প্যানেল</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f1f5f9; }
+        .sidebar-link.active { background: #064e3b; color: white; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col">
+        <div class="p-6 border-b border-slate-100">
+            <h1 class="text-xl font-bold text-emerald-800">নূর অ্যাডমিন</h1>
+            <p class="text-[10px] text-slate-400 uppercase tracking-widest">ম্যানেজমেন্ট প্যানেল</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="showTab('reminders')" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-50">
+                <i class="fas fa-bell"></i> আজকের বার্তা
+            </button>
+            <button onclick="showTab('donors')" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-50">
+                <i class="fas fa-heart"></i> রক্তদাতা
+            </button>
+            <button onclick="showTab('users')" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 transition-all hover:bg-slate-50">
+                <i class="fas fa-users"></i> ইউজার লিস্ট
+            </button>
+        </nav>
+        <div class="p-4 border-t border-slate-100">
+            <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50">
+                <i class="fas fa-sign-out-alt"></i> লগআউট
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <div id="reminders-tab" class="tab-content">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-slate-800">আজকের বার্তা ম্যানেজমেন্ট</h2>
+                <button onclick="openReminderModal()" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-emerald-700">নতুন বার্তা যোগ করুন</button>
+            </div>
+            <div id="reminders-list" class="grid gap-4"></div>
+        </div>
+
+        <div id="donors-tab" class="tab-content hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">রক্তদাতা তালিকা</h2>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">নাম</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">গ্রুপ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">ঠিকানা</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">যোগাযোগ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donors-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="users-tab" class="tab-content hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-8">নিবন্ধিত ইউজার</h2>
+            <div id="users-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+    </main>
+
+    <!-- Reminder Modal -->
+    <div id="reminder-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">নতুন বার্তা</h3>
+            <textarea id="reminder-content" rows="4" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 mb-4" placeholder="বার্তার বিষয়বস্তু লিখুন..."></textarea>
+            <div class="flex gap-3">
+                <button onclick="saveReminder()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold">সংরক্ষণ করুন</button>
+                <button onclick="closeReminderModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">বাতিল</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
