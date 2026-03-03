@@ -7,6 +7,7 @@ export default function Feed() {
   const [confessions, setConfessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchConfessions();
@@ -42,6 +43,11 @@ export default function Feed() {
     setLoading(false);
   }
 
+  const filteredConfessions = confessions.filter(c => 
+    (c.content?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (c.mood_tag?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+  );
+
   if (loading) return <div className="text-center py-12 text-zinc-500 text-sm animate-pulse font-medium">Listening to the world...</div>;
 
   return (
@@ -51,6 +57,8 @@ export default function Feed() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
           <input 
             type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search whispers..." 
             className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-sm"
           />
@@ -69,12 +77,14 @@ export default function Feed() {
       </div>
 
       <div className="grid gap-6">
-        {confessions.length === 0 ? (
+        {filteredConfessions.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-2xl border border-dashed border-slate-200">
-            <p className="text-zinc-500 text-sm font-medium">The vault is silent. Be the first to speak.</p>
+            <p className="text-zinc-500 text-sm font-medium">
+              {searchQuery ? 'No whispers match your search.' : 'The vault is silent. Be the first to speak.'}
+            </p>
           </div>
         ) : (
-          confessions.map((confession) => (
+          filteredConfessions.map((confession) => (
             <ConfessionCard 
               key={confession.id} 
               confession={{
