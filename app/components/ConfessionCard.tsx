@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle, Share2, MoreVertical, Play, Sparkles } from 'lucide-react';
 import AudioPlayer from './AudioPlayer';
 import ReactionPicker from './ReactionPicker';
@@ -19,11 +19,56 @@ interface ConfessionCardProps {
   };
 }
 
-const ConfessionCard: React.FC<ConfessionCardProps> = ({ confession }) => {
+const ConfessionCard: React.FC<ConfessionCardProps> = ({ confession: initialConfession }) => {
+  const [confession, setConfession] = useState(initialConfession);
   const [showComments, setShowComments] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
   
   const audioUrl = confession.audio_url ? storageService.getPublicUrl('confessions', confession.audio_url) : null;
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`confession_updates:${confession.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reactions',
+          filter: `confession_id=eq.${confession.id}`
+        },
+        async () => {
+          const { data } = await supabase
+            .from('reactions')
+            .select('reaction_type, user_id')
+            .eq('confession_id', confession.id);
+          
+          if (data) {
+            setConfession(prev => ({
+              ...prev,
+              reactions: data.map(r => ({ type: r.reaction_type, user_id: r.user_id }))
+            }));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'confessions',
+          filter: `id=eq.${confession.id}`
+        },
+        (payload) => {
+          setConfession(prev => ({ ...prev, ...payload.new }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [confession.id]);
 
   const handleReport = async () => {
     try {
