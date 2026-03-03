@@ -22,6 +22,26 @@ const CommentSection: React.FC<CommentSectionProps> = ({ confessionId }) => {
       fetchComments();
     };
     init();
+
+    const channel = supabase
+      .channel(`comments:${confessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments',
+          filter: `confession_id=eq.${confessionId}`
+        },
+        () => {
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [confessionId]);
 
   const fetchComments = async () => {
@@ -43,12 +63,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({ confessionId }) => {
     const { error } = await supabase.from('comments').insert({
       confession_id: confessionId,
       user_id: currentUser.id,
-      content: newComment
+      content: newComment,
+      audio_url: ''
     });
 
     if (!error) {
       setNewComment('');
-      fetchComments();
     }
   };
 
@@ -59,7 +79,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ confessionId }) => {
       user_id: currentUser.id,
       audio_url: path
     });
-    if (!error) fetchComments();
   };
 
   return (
@@ -86,8 +105,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ confessionId }) => {
 
       <div className="pt-6 border-t border-slate-200">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-             <Recorder onUploadComplete={handleAudioUpload} bucket="comments" label="Voice Echo" />
+          <div className="flex items-center justify-between">
+             <span className="text-xs font-bold text-zinc-500">Add an echo</span>
+             <Recorder onUploadComplete={handleAudioUpload} bucket="comments" minimal />
           </div>
           
           <form onSubmit={handleSubmit} className="flex gap-2">
