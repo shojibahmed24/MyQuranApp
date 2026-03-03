@@ -62,6 +62,7 @@ ALTER TABLE confessions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public confessions are viewable by everyone" ON confessions FOR SELECT USING (status = 'active' OR auth.uid() = user_id OR (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)));
 CREATE POLICY "Users can insert their own confessions" ON confessions FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own confessions" ON confessions FOR DELETE USING (auth.uid() = user_id OR (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)));
+CREATE POLICY "Admins can update any confession" ON confessions FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
 
 ALTER TABLE reactions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Reactions are viewable by everyone" ON reactions FOR SELECT USING (true);
@@ -72,12 +73,52 @@ ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Comments are viewable by everyone" ON comments FOR SELECT USING (status = 'active' OR auth.uid() = user_id OR (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)));
 CREATE POLICY "Authenticated users can comment" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own comments" ON comments FOR DELETE USING (auth.uid() = user_id OR (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)));
+CREATE POLICY "Admins can update any comment" ON comments FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
 
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins can view reports" ON reports FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
 CREATE POLICY "Authenticated users can report" ON reports FOR INSERT WITH CHECK (auth.uid() = reporter_id);
+CREATE POLICY "Admins can update reports" ON reports FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
 
--- TRIGGER FOR NEW USER PROFILES
+-- SECURITY FUNCTIONS & TRIGGERS
+
+-- 1. Secure Play Counter (Atomic)
+CREATE OR REPLACE FUNCTION public.increment_plays(confession_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE public.confessions
+  SET plays_count = COALESCE(plays_count, 0) + 1
+  WHERE id = confession_id
+  AND status = 'active';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- 2. Prevent Privilege Escalation
+CREATE OR REPLACE FUNCTION public.protect_profile_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = auth.uid() AND is_admin = true
+  ) THEN
+    IF TG_OP = 'INSERT' THEN
+      NEW.is_admin := FALSE;
+      NEW.is_pro := FALSE;
+    ELSIF TG_OP = 'UPDATE' THEN
+      NEW.is_admin := OLD.is_admin;
+      NEW.is_pro := OLD.is_pro;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_profile_update_protect ON public.profiles;
+CREATE TRIGGER on_profile_update_protect
+  BEFORE INSERT OR UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE PROCEDURE public.protect_profile_fields();
+
+-- 3. Secure User Creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 DECLARE
@@ -104,7 +145,7 @@ BEGIN
 
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
