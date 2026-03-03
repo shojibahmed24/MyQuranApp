@@ -9,7 +9,8 @@ import {
   Brain, 
   Sparkles, 
   ChevronRight,
-  Filter
+  Activity,
+  Shield
 } from 'lucide-react';
 import ConfessionCard from './ConfessionCard';
 
@@ -60,82 +61,96 @@ export default function Dashboard() {
     setLoading(false);
   }
 
-  const emotions = [
-    { label: 'Sad', value: 32, color: 'bg-blue-400' },
-    { label: 'Hopeful', value: 21, color: 'bg-emerald-400' },
-    { label: 'Angry', value: 14, color: 'bg-red-400' },
-    { label: 'Lonely', value: 18, color: 'bg-slate-400' },
-    { label: 'Neutral', value: 15, color: 'bg-zinc-400' },
-  ];
-
-  if (loading) return <div className="text-zinc-500 animate-pulse">Analyzing your vault...</div>;
+  if (loading) return (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-32 bg-slate-200 rounded-2xl" />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="h-24 bg-slate-200 rounded-2xl" />
+        <div className="h-24 bg-slate-200 rounded-2xl" />
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard icon={<Play size={18} />} label="Total Plays" value={stats.totalPlays.toLocaleString()} subtext="Lifetime" />
-        <StatCard icon={<Clock size={18} />} label="Avg Duration" value="2:45" subtext="Per session" />
-        <StatCard icon={<Heart size={18} />} label="Reactions" value={stats.totalReactions.toString()} subtext="Across all posts" />
-        <StatCard icon={<MessageSquare size={18} />} label="Comments" value={stats.totalComments.toString()} subtext="Voice & Text" />
-        <StatCard icon={<TrendingUp size={18} />} label="Growth" value={stats.growth} subtext="Last 7 days" color="text-emerald-600" />
-        <StatCard icon={<Brain size={18} />} label="Emotional" value={`${stats.emotionalScore}%`} subtext="Vulnerability" color="text-emerald-600" />
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Emotional Breakdown */}
-        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-lg text-zinc-900">Emotional Breakdown</h3>
-            <Sparkles size={18} className="text-emerald-500" />
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Hero Stats Card */}
+      <div className="relative overflow-hidden bg-zinc-900 rounded-3xl p-8 text-white shadow-2xl shadow-zinc-900/20">
+        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="text-emerald-400" size={16} />
+            <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">Your Impact</span>
           </div>
-          
-          <div className="relative h-48 flex items-center justify-center mb-8">
-             <svg className="w-40 h-40 transform -rotate-90">
-                <circle cx="80" cy="80" r="70" fill="transparent" stroke="#f1f5f9" strokeWidth="12" />
-                <circle cx="80" cy="80" r="70" fill="transparent" stroke="#10b981" strokeWidth="12" strokeDasharray="440" strokeDashoffset="110" />
-             </svg>
-             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-zinc-900">84%</span>
-                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Score</span>
-             </div>
-          </div>
-
-          <div className="space-y-3">
-            {emotions.map(e => (
-              <div key={e.label} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${e.color}`}></div>
-                  <span className="text-sm text-zinc-600">{e.label}</span>
-                </div>
-                <span className="text-sm font-semibold text-zinc-900">{e.value}%</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-8 p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
-            <p className="text-xs text-emerald-800 leading-relaxed">
-              “Your audience connects most with emotionally vulnerable content posted at night.”
-            </p>
-          </div>
-        </div>
-
-        {/* My Confessions */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg text-zinc-900">My Confessions</h3>
-            <div className="flex gap-2">
-              <button className="p-2 bg-white border border-slate-200 rounded-xl text-zinc-400 hover:text-zinc-900 transition-colors shadow-sm">
-                <Filter size={18} />
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-stone-50 transition-all shadow-sm">
-                View All <ChevronRight size={16} />
-              </button>
+          <div className="flex items-end gap-4">
+            <h2 className="text-5xl font-bold tracking-tighter">{stats.totalPlays}</h2>
+            <div className="mb-2 flex items-center gap-1 text-emerald-400 text-sm font-bold">
+              <TrendingUp size={16} />
+              <span>{stats.growth}</span>
             </div>
           </div>
+          <p className="text-zinc-400 text-sm mt-1">Total listeners reached this month</p>
+        </div>
+      </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            {confessions.slice(0, 4).map(c => (
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard 
+          icon={<Heart className="text-rose-500" size={20} />} 
+          label="Reactions" 
+          value={stats.totalReactions} 
+          sub="Community love"
+        />
+        <StatCard 
+          icon={<MessageSquare className="text-blue-500" size={20} />} 
+          label="Echoes" 
+          value={stats.totalComments} 
+          sub="Voice replies"
+        />
+      </div>
+
+      {/* Emotional Pulse Section */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-50 rounded-xl">
+              <Brain className="text-emerald-600" size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-zinc-900">Emotional Pulse</h3>
+              <p className="text-xs text-zinc-500">AI-driven sentiment analysis</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold text-emerald-600">{stats.emotionalScore}%</span>
+            <p className="text-[10px] font-bold text-zinc-400 uppercase">Stability</p>
+          </div>
+        </div>
+        
+        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-1000"
+            style={{ width: `${stats.emotionalScore}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <Activity size={20} className="text-emerald-600" />
+            Your Whispers
+          </h3>
+          <button className="text-xs font-bold text-emerald-600 hover:underline">View All</button>
+        </div>
+
+        <div className="space-y-4">
+          {confessions.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+              <p className="text-zinc-400 text-sm">You haven't shared any whispers yet.</p>
+            </div>
+          ) : (
+            confessions.slice(0, 3).map((c) => (
               <ConfessionCard 
                 key={c.id} 
                 confession={{
@@ -143,62 +158,25 @@ export default function Dashboard() {
                   reactions: c.reactions?.map((r: any) => ({ type: r.reaction_type, user_id: r.user_id }))
                 }} 
               />
-            ))}
-          </div>
-
-          {/* AI Insights Panel */}
-          <div className="bg-emerald-600 rounded-2xl p-8 relative overflow-hidden shadow-lg">
-            <div className="absolute top-0 right-0 p-4 opacity-10 text-white">
-              <Sparkles size={120} />
-            </div>
-            <div className="relative z-10 text-white">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-white/20 rounded-xl">
-                  <Brain size={20} className="text-white" />
-                </div>
-                <h3 className="font-bold text-xl">AI Insights</h3>
-              </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <InsightItem title="Best Posting Time" value="Tuesdays at 9:00 PM" />
-                  <InsightItem title="Emotional Trend" value="Increasing Vulnerability" />
-                </div>
-                <div className="space-y-4">
-                  <InsightItem title="Audience Psychology" value="Resonates with slow-paced audio" />
-                  <InsightItem title="Suggested Tags" value="#LateNight #Healing #Truth" />
-                </div>
-              </div>
-              <div className="mt-6 pt-6 border-t border-white/20">
-                <p className="text-sm text-emerald-50 italic">
-                  “Posts with slower tone and soft pauses have 22% higher completion rate.”
-                </p>
-              </div>
-            </div>
-          </div>
+            ))
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function StatCard({ icon, label, value, subtext, color = "text-zinc-900" }: any) {
+function StatCard({ icon, label, value, sub }: any) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 hover:border-emerald-200 transition-all group shadow-sm">
-      <div className="flex items-center gap-2 text-zinc-400 mb-2 group-hover:text-emerald-600 transition-colors">
-        {icon}
-        <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm hover:border-emerald-200 transition-all group">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="p-2 bg-stone-50 rounded-xl group-hover:bg-emerald-50 transition-colors">
+          {icon}
+        </div>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{label}</span>
       </div>
-      <div className={`text-2xl font-bold mb-1 ${color}`}>{value}</div>
-      <div className="text-[10px] text-zinc-500 font-medium">{subtext}</div>
-    </div>
-  );
-}
-
-function InsightItem({ title, value }: any) {
-  return (
-    <div>
-      <div className="text-[10px] text-emerald-100 uppercase font-bold tracking-widest mb-1">{title}</div>
-      <div className="text-sm font-semibold text-white">{value}</div>
+      <div className="text-2xl font-bold text-zinc-900">{value}</div>
+      <p className="text-[10px] text-zinc-400 font-medium">{sub}</p>
     </div>
   );
 }
