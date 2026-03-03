@@ -21,6 +21,8 @@ jobs:
       SIGNING_STORE_PASSWORD: ""
       SIGNING_KEY_ALIAS: ""
       SIGNING_KEY_PASSWORD: ""
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -43,21 +45,24 @@ jobs:
           mkdir -p www
           
           # 2. Stage 1: Copy base files (Root to WWW)
-          # We use a pattern that avoids recursive copy of the www folder itself
-          cp -f index.html www/ 2>/dev/null || true
-          cp -f script.js www/ 2>/dev/null || true
-          cp -f style.css www/ 2>/dev/null || true
+          # We copy all files except folders to the root of www
+          find . -maxdepth 1 -type f -not -name ".*" -exec cp {} www/ ;
           
-          # 3. Stage 2: PRIORITY OVERRIDE (App Folder content to WWW)
-          # This ensures app/index.html becomes the primary entry point
+          # 3. Stage 2: Modular Injection (App Folder content to WWW)
           if [ -d "app" ]; then
-            echo "Uplink: Injecting user app files..."
+            echo "Uplink: Injecting modular app files..."
             cp -rf app/* www/
           fi
           
-          # 4. Final Integrity Check
+          # 4. Final Integrity Check & Environment Injection
           if [ ! -f "www/index.html" ]; then
              echo "<h1>System Error: Entry point not found.</h1>" > www/index.html
+          fi
+
+          # Inject Supabase Config if secrets are present
+          if [ ! -z "$SUPABASE_URL" ]; then
+            echo "Injecting Database Bridge..."
+            sed -i 's/<head>/<head><script>window.StudioDatabase={url:"'${SUPABASE_URL}'",key:"'${SUPABASE_KEY}'"};</script>/' www/index.html
           fi
 
           # 5. Capacitor Environment Setup
