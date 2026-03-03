@@ -1,0 +1,1 @@
+ALTER TABLE confessions RENAME COLUMN caption TO content;
